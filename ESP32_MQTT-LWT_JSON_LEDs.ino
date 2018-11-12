@@ -96,8 +96,8 @@ mqtt:
 ####################
 # groups.yaml
 ####################
-LED 1:
-  - light.led_1
+Back Porch:
+  - light.back_porch
   - input_number.led_animation_speed
   - input_select.led_effect
   
@@ -147,7 +147,7 @@ led_effect:
 # lights.yaml:
 ####################
 - platform: mqtt_json
-  name: "LED 1"
+  name: "Back Porch"
   state_topic: "led/2811/back_porch"
   command_topic: "led/2811/back_porch/cmnd"
   availability_topic: "led/2811/back_porch/lwt"
