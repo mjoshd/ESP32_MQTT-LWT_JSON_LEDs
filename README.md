@@ -6,7 +6,7 @@
 
 * Adapted for use with ESP32
 
-* Added MQTT LWT functionality (example uses Core Mosquitto addon)
+* Added MQTT LWT functionality
 
 * Added Color Temperature slider for use in Home Assistant
 

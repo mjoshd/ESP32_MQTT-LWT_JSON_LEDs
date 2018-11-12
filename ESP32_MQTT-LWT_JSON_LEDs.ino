@@ -42,7 +42,7 @@ light: !include lights.yaml
 
 # enable mqtt
 mqtt:
-  broker: core-mosquitto
+  broker: !secret mqtt_broker_ip
   port: 1883
   keepalive: 60
   username: !secret mqtt_username
