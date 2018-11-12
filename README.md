@@ -2,7 +2,7 @@
 
 ## This  is a port of the BRUH ESP-MQTT-JSON-Digital-LEDs code
 
-### Notable changes include:
+### Notable changes include
 
 * Adapted for use with ESP32
 
