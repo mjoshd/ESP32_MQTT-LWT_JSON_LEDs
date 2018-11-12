@@ -8,6 +8,6 @@
 
 * Added MQTT LWT functionality (example uses Core Mosquitto addon)
 
-* Added Color Temperature slider for use Home Assistant
+* Added Color Temperature slider for use in Home Assistant
 
 * Re-factored some code to increase readability and ease of adoption
