@@ -197,29 +197,29 @@ led_effect:
 #include "FastLED.h"
 
 /************ WIFI and MQTT Information (CHANGE THESE FOR YOUR SETUP) ******************/
-#define WIFI_SSID           "wifi ssid" 
-#define WIFI_PASSWORD       "wifi password"
-#define MQTT_SERVER         "mqtt broker ip"
-#define MQTT_USERNAME       "mqtt username"
-#define MQTT_PASSWORD       "mqtt password"
+#define WIFI_SSID           "wifi ssid"                  //<----- change me
+#define WIFI_PASSWORD       "wifi password"              //<----- change me
+#define MQTT_SERVER         "mqtt broker ip"             //<----- change me
+#define MQTT_USERNAME       "mqtt username"              //<----- change me
+#define MQTT_PASSWORD       "mqtt password"              //<----- change me
 #define MQTT_PORT           1883
 
 
 
 /**************************** FOR OTA **************************************************/
-#define HOSTNAME            "led-2811-back_porch"
-#define OTA_PASSWORD        "mqtt ota password"
+#define HOSTNAME            "led-2811-back_porch"        //<----- change me
+#define OTA_PASSWORD        "mqtt ota password"          //<----- change me
 #define OTA_PORT            8266
 
 
 
 /************* MQTT TOPICS (change these topics as you wish)  **************************/
-#define STATE_TOPIC_LIGHT   "led/2811/back_porch"
+#define STATE_TOPIC_LIGHT   "led/2811/back_porch"        //<----- change me
 #define STATE_TOPIC_RETAIN  false
 
-#define CMND_TOPIC_LIGHT    "led/2811/back_porch/cmnd"
+#define CMND_TOPIC_LIGHT    "led/2811/back_porch/cmnd"   //<----- change me
 
-#define LWT_TOPIC_LIGHT     "led/2811/back_porch/lwt"
+#define LWT_TOPIC_LIGHT     "led/2811/back_porch/lwt"    //<----- change me
 #define LWT_QOS             1
 #define LWT_RETAIN          true
 #define LWT_OFFLINE         "Offline"
