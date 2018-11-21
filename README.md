@@ -1,6 +1,6 @@
 # ESP32 MQTT+LWT JSON LEDs
 
-## This is a port of the BRUH Automation ESP-MQTT-JSON-Digital-LEDs code
+## This is a port of the BRUH Automation [ESP-MQTT-JSON-Digital-LEDs](https://github.com/bruhautomation/ESP-MQTT-JSON-Digital-LEDs) code
 
 ### Notable changes include
 
