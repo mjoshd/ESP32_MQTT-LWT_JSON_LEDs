@@ -19,7 +19,10 @@
 * Re-factored some code to increase readability and ease of adoption
 
 ```text
-Many thanks go out to Ben (BRUH), Justin (Dr. Zzs), Rob (The Hook Up) and Hans (Tweaking4All) for providing the source code and, more importantly, the inspiration which made this possible.
+Many thanks go out to Ben (BRUH), Justin (Dr. Zzs), Rob (The Hook Up) 
+ and Hans (Tweaking4All) for providing 
+ the source code and, 
+ more importantly, the inspiration which made this possible.
 
 Thanks everyone!
 ```
