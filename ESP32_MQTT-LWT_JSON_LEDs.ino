@@ -1469,18 +1469,6 @@ void setupHJPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
 
 
 /* Begin From Halloween Eyes */
-/* Originally from https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectBlinkingHalloweenEyes
- * Parameter  Purpose                Examples
- * red      Red Color              0xFF
- * green    Green Color                0x00
- * blue       Blue Color               0x00
- * EyeWidth   How many LEDs per eye        1
- * EyeSpace   Number of LEDs between the eyes    2
- * Fade     Fade out or not            true, false
- * Steps    Number of steps on fade out      10
- * FadeDelay  Delay between each fade out level  100
- * EndPause   Delay after everything is completed  1000
- */
 void HalloweenEyes(byte red, byte green, byte blue, 
                    int EyeWidth, int EyeSpace, 
                    boolean Fade, int Steps, int FadeDelay,
