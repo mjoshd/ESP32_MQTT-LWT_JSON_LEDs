@@ -23,13 +23,13 @@
 
   - Differences from esp8266 version can be found by searching for lines containing "***ESP8266 > ESP32 Conversion"
 
+
   _   _                 _          ____             __ _       
  | | | | __ _ ___ ___  (_) ___    / ___|___  _ __  / _(_) __ _ 
  | |_| |/ _` / __/ __| | |/ _ \  | |   / _ \| '_ \| |_| |/ _` |
  |  _  | (_| \__ \__ \_| | (_) | | |__| (_) | | | |  _| | (_| |
  |_| |_|\__,_|___/___(_)_|\___/   \____\___/|_| |_|_| |_|\__, |
                                                          |___/ 
-
 ####################
 #configuration.yaml
 ####################
@@ -90,6 +90,28 @@ mqtt:
   trigger:
   - entity_id: input_select.led_effect
     platform: state
+- id: maintain_led_effect_dropdown
+  alias: Maintain LED Effect Dropdown
+  trigger:
+  - entity_id: light.back_porch_leds
+    platform: state
+  condition: []
+  action:
+  - data_template:
+      entity_id: input_select.led_effect
+      option: '{{ state_attr("light.back_porch_leds", "effect") }}'
+    service: input_select.select_option
+- id: led_locator
+  alias: LED Locator
+  trigger:
+  - entity_id: input_number.led_location
+    platform: state
+  condition: []
+  action:
+  - data_template:
+      topic: led/2811/back_porch/cmnd
+      payload: '{"location":{{ trigger.to_state.state | int }}}'
+    service: mqtt.publish
 
 
 
@@ -97,9 +119,10 @@ mqtt:
 # groups.yaml
 ####################
 Back Porch LEDs:
-  - light.back_porch
+  - light.back_porch_leds
   - input_number.led_animation_speed
   - input_select.led_effect
+  - input_number.led_location
   
 
 
@@ -112,6 +135,13 @@ led_animation_speed:
   min: 1
   max: 150
   step: 10
+
+led_location:
+  name: LED Location
+  initial: 0
+  min: 0
+  max: 500
+  step: 1
   
 
 
@@ -120,26 +150,34 @@ led_animation_speed:
 ####################
 led_effect:
   name: LED Effect
-  initial: solid
+  initial: Solid
   options:
-    - "bpm"
-    - "candy cane"
-    - "confetti"
-    - "cyclon rainbow"
-    - "dots" 
-    - "fire"
-    - "glitter"
-    - "juggle"
-    - "lightning"
-    - "noise"
-    - "police all"
-    - "police one"
-    - "rainbow"
-    - "rainbow with glitter"
-    - "ripple"
-    - "sinelon"
-    - "solid"
-    - "twinkle"
+    - "BPM"
+    - "Candy Cane"
+    - "Confetti"
+    - "Cylon Rainbow"
+    - "Dots" 
+    - "Fire"
+    - "Glitter"
+    - "Juggle"
+    - "Lightning"
+    - "Noise"
+    - "Police All"
+    - "Police One"
+    - "Rainbow"
+    - "Rainbow With Glitter"
+    - "Ripple"
+    - "Sinelon"
+    - "Solid"
+    - "Twinkle"
+    - "Christmas"
+    - "Thanksgiving"
+    - "Turkey Day"
+    - "Halloween"
+    - "Pumpkin"
+    - "Halloween Eyes"
+    - "Rainbow Cycle"
+    - "LED Locator"
 
 
 
@@ -161,24 +199,32 @@ led_effect:
   rgb: true
   qos: 1
   effect_list:
-    - "bpm"
-    - "candy cane"
-    - "confetti"
-    - "cyclon rainbow"
-    - "dots" 
-    - "fire"
-    - "glitter"
-    - "juggle"
-    - "lightning"
-    - "noise"
-    - "police all"
-    - "police one"
-    - "rainbow"
-    - "rainbow with glitter"
-    - "ripple"
-    - "sinelon"
-    - "solid"
-    - "twinkle"
+    - "BPM"
+    - "Candy Cane"
+    - "Confetti"
+    - "Cylon Rainbow"
+    - "Dots" 
+    - "Fire"
+    - "Glitter"
+    - "Juggle"
+    - "Lightning"
+    - "Noise"
+    - "Police All"
+    - "Police One"
+    - "Rainbow"
+    - "Rainbow With Glitter"
+    - "Ripple"
+    - "Sinelon"
+    - "Solid"
+    - "Twinkle"
+    - "Christmas"
+    - "Thanksgiving"
+    - "Turkey Day"
+    - "Halloween"
+    - "Pumpkin"
+    - "Halloween Eyes"
+    - "Rainbow Cycle"
+    - "LED Locator"
 
 */
 
@@ -228,7 +274,7 @@ led_effect:
 #define LWT_TOPIC_HASSIO    "tele/hass1/LWT"
 #define LWT_ONLINE_HASSIO   "Online"
 
-
+#define MQTT_CLEANSESSION   true
 
 /****************************************FOR JSON***************************************/
 const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
@@ -250,9 +296,9 @@ const int BUFFER_SIZE = JSON_OBJECT_SIZE(10);
 struct CRGB leds[NUM_PIXELS];
 const char* on_cmd = "ON";
 const char* off_cmd = "OFF";
-const char* effect = "solid";
-String effectString = "solid";
-String oldeffectString = "solid";
+const char* effect = "Solid";
+String effectString = "Solid";
+String oldeffectString = "Solid";
 
 byte realRed = 0;
 byte realGreen = 0;
@@ -275,6 +321,8 @@ int loopCount = 0;
 int stepR, stepG, stepB;
 int redVal, grnVal, bluVal;
 int color_temp;
+
+int newLocator, oldLocator;     /* From The Hookup */
 
 bool flash = false;
 bool startFlash = false;
@@ -350,6 +398,61 @@ bool gReverseDirection = false;
 //BPM
 uint8_t gHue = 0;
 
+/* Begin From Dr. Zzs */
+/*Gradient palette "Orange_to_Purple_gp", originally from
+ * http://soliton.vm.bytemark.co.uk/pub/cpt-city/ds/icons/tn/Orange-to-Purple.png.index.html
+ * converted for FastLED with gammas (2.6, 2.2, 2.5)
+ * Size: 12 bytes of program space.
+ */
+DEFINE_GRADIENT_PALETTE( Orange_to_Purple_gp ) {
+    0, 208, 50,   1,
+  127, 146, 27,  45,
+  255,  97, 12, 178
+};
+
+
+/* Gradient palette "bhw2_thanks_gp", originally from
+ * http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw2/tn/bhw2_thanks.png.index.html
+ * converted for FastLED with gammas (2.6, 2.2, 2.5)
+ * Size: 36 bytes of program space.
+ */
+DEFINE_GRADIENT_PALETTE(bhw2_thanks_gp){
+    0,   9,  5, 1,
+   48,  25,  9, 1,
+   76, 137, 27, 1,
+   96,  98, 42, 1,
+  124, 144, 79, 1,
+  153,  98, 42, 1,
+  178, 137, 27, 1,
+  211,  23,  9, 1,
+  255,   9,  5, 1
+};
+
+
+/* Gradient palette "bhw2_xmas_gp", originally from
+ * http://soliton.vm.bytemark.co.uk/pub/cpt-city/bhw/bhw2/tn/bhw2_xmas.png.index.html
+ * converted for FastLED with gammas (2.6, 2.2, 2.5)
+ * Size: 48 bytes of program space.
+ */
+DEFINE_GRADIENT_PALETTE(bhw2_xmas_gp){
+    0,   0,  12,  0,
+   40,   0,  55,  0,
+   66,   1, 117,  2,
+   77,   1,  84,  1,
+   81,   0,  55,  0,
+  119,   0,  12,  0,
+  153,  42,   0,  0,
+  181, 121,   0,  0,
+  204, 255,  12,  8,
+  224, 121,   0,  0,
+  244,  42,   0,  0,
+  255,  42,   0,  0
+};
+
+CRGBPalette16 ThxPalettestriped;        //for Thanksgiving
+CRGBPalette16 HalloweenPalettestriped;  //for Halloween
+CRGBPalette16 HJPalettestriped;         //for Holly Jolly
+/* End From Dr. Zzs */
 
 String sTopic, sMessage;
 WiFiClient espClient;
@@ -371,6 +474,11 @@ void setup() {
   setupStripedPalette( CRGB::Red, CRGB::Red, CRGB::White, CRGB::White); //for CANDY CANE
   gPal = HeatColors_p; //for FIRE
 
+/* Begin From Dr. Zzs */
+  setupThxPalette( CRGB::OrangeRed, CRGB::Olive, CRGB::Maroon, CRGB::Maroon); //for Thanksgiving
+  setupHalloweenPalette( CRGB::DarkOrange, CRGB::DarkOrange, CRGB::Indigo, CRGB::Indigo); //for Halloween
+  setupHJPalette( CRGB::Red, CRGB::Red, CRGB::Green, CRGB::Green); //for Holly Jolly
+/* End From Dr. Zzs */
 
 /*- continue standard setup -*/
   ArduinoOTA.setPort(OTA_PORT);
@@ -404,9 +512,9 @@ void setup() {
   Serial.println("---------- setup() complete ----------");
   Serial.println("");
   reconnect();
-}
-/*- end standard setup ***/
 
+/*- end standard setup ***/
+}
 
 
 /********************************** START SETUP WIFI*****************************************/
@@ -495,7 +603,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   startFade = true;
   inFade = false; // Kill the current fade
 
-  /*  Re-send "Online" status when home assistant reports "Online" 
+  /*  Re-send "Online" status when Home Assistant reports "Online" 
    *  - may not be needed due to LWT message being retained 
    *  - may be more useful when using MQTT discovery (this sketch does not)
   */
@@ -540,6 +648,7 @@ bool processJson(char* message) {
     }else if(strcmp(root["state"], off_cmd) == 0){
       stateOn = false;
       onbeforeflash = false;
+      setColor(0, 0, 0);
     }
   }
 
@@ -572,7 +681,7 @@ bool processJson(char* message) {
 
     if(root.containsKey("transition")){
       transitionTime = root["transition"];
-    }else if( effectString == "solid"){
+    }else if( effectString == "Solid"){
       transitionTime = 0;
     }
     
@@ -614,8 +723,12 @@ bool processJson(char* message) {
 
     if(root.containsKey("transition")){
       transitionTime = root["transition"];
-    }else if(effectString == "solid"){
+    }else if(effectString == "Solid"){
       transitionTime = 0;
+    }
+
+    if(root.containsKey("location")){
+      newLocator = root["location"];    /* From The Hookup */
     }
 
   }
@@ -660,13 +773,13 @@ void reconnect() {
   while (!client.connected()) {
     Serial.print("Attempting MQTT connection... ");
     // Attempt to connect
-    if(client.connect(HOSTNAME, MQTT_USERNAME, MQTT_PASSWORD, LWT_TOPIC_LIGHT, LWT_QOS, LWT_RETAIN, LWT_OFFLINE)) {
+    if(client.connect(HOSTNAME, MQTT_USERNAME, MQTT_PASSWORD, LWT_TOPIC_LIGHT, LWT_QOS, LWT_RETAIN, LWT_OFFLINE, MQTT_CLEANSESSION)) {
       Serial.println("MQTT Broker connection established");
       client.subscribe(LWT_TOPIC_HASSIO);
       client.subscribe(CMND_TOPIC_LIGHT);
       client.publish(LWT_TOPIC_LIGHT, LWT_ONLINE, LWT_RETAIN);
       setColor(0, 0, 0);
-//      SEND_STATE();     // seems unnecessary
+      SEND_STATE();
     } else {
       Serial.print("failed, rc=");
       Serial.print(client.state());
@@ -720,7 +833,7 @@ void loop() {
 
 
   //EFFECT BPM
-  if (effectString == "bpm") {
+  if (effectString == "BPM") {
     uint8_t BeatsPerMinute = 62;
     CRGBPalette16 palette = PartyColors_p;
     uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
@@ -735,7 +848,7 @@ void loop() {
 
 
   //EFFECT Candy Cane
-  if (effectString == "candy cane") {
+  if (effectString == "Candy Cane") {
     static uint8_t startIndex = 0;
     startIndex = startIndex + 1; /* higher = faster motion */
     fill_palette( leds, NUM_PIXELS,
@@ -749,7 +862,7 @@ void loop() {
 
 
   //EFFECT CONFETTI
-  if (effectString == "confetti" ) {
+  if (effectString == "Confetti" ) {
     fadeToBlackBy( leds, NUM_PIXELS, 25);
     int pos = random16(NUM_PIXELS);
     leds[pos] += CRGB(realRed + random8(64), realGreen, realBlue);
@@ -760,8 +873,8 @@ void loop() {
   }
 
 
-  //EFFECT CYCLON RAINBOW
-  if (effectString == "cyclon rainbow") {                    //Single Dot Down
+  //EFFECT CYLON RAINBOW
+  if (effectString == "Cylon Rainbow") {                    //Single Dot Down
     static uint8_t hue = 0;
     // First slide the led in one direction
     for (int i = 0; i < NUM_PIXELS; i++) {
@@ -796,7 +909,7 @@ void loop() {
 
 
   //EFFECT DOTS
-  if (effectString == "dots") {
+  if (effectString == "Dots") {
     uint16_t inner = beatsin16(bpm, NUM_PIXELS / 4, NUM_PIXELS / 4 * 3);
     uint16_t outer = beatsin16(bpm, 0, NUM_PIXELS - 1);
     uint16_t middle = beatsin16(bpm, NUM_PIXELS / 3, NUM_PIXELS / 3 * 2);
@@ -813,7 +926,7 @@ void loop() {
 
 
   //EFFECT FIRE
-  if (effectString == "fire") {
+  if (effectString == "Fire") {
     Fire2012WithPalette();
     if (transitionTime == 0 or transitionTime == NULL) {
       transitionTime = 150;
@@ -825,7 +938,7 @@ void loop() {
 
 
   //EFFECT Glitter
-  if (effectString == "glitter") {
+  if (effectString == "Glitter") {
     fadeToBlackBy( leds, NUM_PIXELS, 20);
 //    addGlitterColor(80, random(0, 255), random(0, 255), random(0, 255));   // random color glitter
     addGlitterColor(80, realRed, realGreen, realBlue);                   // selectable color glitter
@@ -837,7 +950,7 @@ void loop() {
 
 
   //EFFECT JUGGLE
-  if (effectString == "juggle" ) {                           // eight colored dots, weaving in and out of sync with each other
+  if (effectString == "Juggle" ) {                           // eight colored dots, weaving in and out of sync with each other
     fadeToBlackBy(leds, NUM_PIXELS, 20);
     for (int i = 0; i < 8; i++) {
       leds[beatsin16(i + 7, 0, NUM_PIXELS - 1  )] |= CRGB(realRed, realGreen, realBlue);
@@ -850,7 +963,7 @@ void loop() {
 
 
   //EFFECT LIGHTNING
-  if (effectString == "lightning") {
+  if (effectString == "Lightning") {
     twinklecounter = twinklecounter + 1;                     //Resets strip if previous animation was running
     if (twinklecounter < 2) {
       FastLED.clear();
@@ -884,7 +997,7 @@ void loop() {
 
 
   //EFFECT POLICE ALL
-  if (effectString == "police all") {                 //POLICE LIGHTS (TWO COLOR SOLID)
+  if (effectString == "Police All") {                 //POLICE LIGHTS (TWO COLOR SOLID)
     idex++;
     if (idex >= NUM_PIXELS) {
       idex = 0;
@@ -901,7 +1014,7 @@ void loop() {
   }
 
   //EFFECT POLICE ONE
-  if (effectString == "police one") {
+  if (effectString == "Police One") {
     idex++;
     if (idex >= NUM_PIXELS) {
       idex = 0;
@@ -928,7 +1041,7 @@ void loop() {
 
 
   //EFFECT RAINBOW
-  if (effectString == "rainbow") {
+  if (effectString == "Rainbow") {
     // FastLED's built-in rainbow generator
     static uint8_t starthue = 0;    thishue++;
     fill_rainbow(leds, NUM_PIXELS, thishue, deltahue);
@@ -940,7 +1053,7 @@ void loop() {
 
 
   //EFFECT RAINBOW WITH GLITTER
-  if (effectString == "rainbow with glitter") {               // FastLED's built-in rainbow generator with Glitter
+  if (effectString == "Rainbow With Glitter") {               // FastLED's built-in rainbow generator with Glitter
     static uint8_t starthue = 0;
     thishue++;
     fill_rainbow(leds, NUM_PIXELS, thishue, deltahue);
@@ -953,7 +1066,7 @@ void loop() {
 
 
   //EFFECT SINELON
-  if (effectString == "sinelon") {
+  if (effectString == "Sinelon") {
     fadeToBlackBy( leds, NUM_PIXELS, 20);
     int pos = beatsin16(13, 0, NUM_PIXELS - 1);
     leds[pos] += CRGB(realRed, realGreen, realBlue);
@@ -965,7 +1078,7 @@ void loop() {
 
 
   //EFFECT TWINKLE
-  if (effectString == "twinkle") {
+  if (effectString == "Twinkle") {
     twinklecounter = twinklecounter + 1;
     if (twinklecounter < 2) {                               //Resets strip if previous animation was running
       FastLED.clear();
@@ -991,7 +1104,153 @@ void loop() {
     showleds();
   }
 
+/* Begin From Dr. Zzs */
+    // colored stripes pulsing in Shades of GREEN and RED
+    if(effectString == "Christmas"){
+      uint8_t BeatsPerMinute = 62;
+      CRGBPalette16 palette = bhw2_xmas_gp;
+      uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+      for( int i = 0; i < NUM_PIXELS; i++){                 //9948
+        leds[i] = ColorFromPalette(palette, gHue+(i*2), beat-gHue+(i*10));
+      }
+      showleds();
+    }
 
+ 
+    // colored stripes pulsing in Shades of Red and ORANGE and Green
+    if(effectString == "Thanksgiving"){     
+      static uint8_t startIndex = 0;
+      startIndex = startIndex + 1;                        /* higher = faster motion */
+      fill_palette(leds, NUM_PIXELS,
+        startIndex, 16,                                   /* higher = narrower stripes */
+        ThxPalettestriped, 255, LINEARBLEND);
+      if(transitionTime == 0 or transitionTime == NULL){
+        transitionTime = 0;
+      }                 
+      showleds();
+    }
+  
+   
+    // colored stripes pulsing in Shades of Brown and ORANGE
+    if(effectString == "Turkey Day"){
+      uint8_t BeatsPerMinute = 62;
+      CRGBPalette16 palette = bhw2_thanks_gp;
+      uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+      for(int i = 0; i < NUM_PIXELS; i++){                    //9948
+        leds[i] = ColorFromPalette(palette, gHue+(i*2), beat-gHue+(i*10));
+      }
+      showleds();
+    }
+  
+   
+    // colored stripes pulsing in Shades of Purple and Orange
+    if(effectString == "Halloween"){
+      uint8_t BeatsPerMinute = 62;
+      CRGBPalette16 palette = Orange_to_Purple_gp;
+      uint8_t beat = beatsin8( BeatsPerMinute, 64, 255);
+      for(int i = 0; i < NUM_PIXELS; i++){                   //9948
+        leds[i] = ColorFromPalette(palette, gHue+(i*2), beat-gHue+(i*10));
+      }
+      showleds();
+    }
+  
+   
+  
+    if(effectString == "Pumpkin"){
+      static uint8_t startIndex = 0;
+      startIndex = startIndex + 1;                        /* higher = faster motion */
+      fill_palette( leds, NUM_PIXELS,
+        startIndex, 16,                                   /* higher = narrower stripes */
+        HalloweenPalettestriped, 255, LINEARBLEND);
+      if(transitionTime == 0 or transitionTime == NULL){
+        transitionTime = 0;
+      }                 
+      showleds();
+    }
+  
+   
+  
+    if(effectString == "Holly Jolly"){
+      static uint8_t startIndex = 0;
+      startIndex = startIndex + 1;                        /* higher = faster motion */
+      fill_palette( leds, NUM_PIXELS,
+        startIndex, 16,                                   /* higher = narrower stripes */
+        HJPalettestriped, 255, LINEARBLEND);
+      if (transitionTime == 0 or transitionTime == NULL) {
+        transitionTime = 0;
+      }
+      showleds();
+    }
+/* End From Dr. Zzs */
+
+
+
+/* Begin From Tweaking4All */
+    /* Halloween Eyes */
+    /* From https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectBlinkingHalloweenEyes */
+    /* Parameter  Purpose                              Examples
+     * red        Red Color                            0xFF
+     * green      Green Color                          0x00
+     * blue       Blue Color                           0x00
+     * EyeWidth   How many LEDs per eye                1
+     * EyeSpace   Number of LEDs between the eyes      2
+     * Fade       Fade out or not                      true/false
+     * Steps      Number of steps on fade out          10
+     * FadeDelay  Delay between each fade out level    100
+     * EndPause   Delay after everything is completed  1000
+     */    
+    if(effectString == "Halloween Eyes"){
+      // Fixed:
+      // HalloweenEyes(0xff, 0x00, 0x00, 1,4, true, 10, 80, 3000);
+      // or Random:
+      SpookyEyes(0xff, 0x00, 0x00, 
+                 1, 4, 
+                 true, random(5,50), random(50,150), 
+                 random(1000, 10000));
+    }
+
+
+    /* Rainbow Cycle */
+    /* From https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectRainbowCycle */
+    if(effectString == "Rainbow Cycle"){
+      /* rainbowCycle(20); */             // higher number = slower effect
+      
+      // scale transitionTime to a number usable by this effect
+      /* Scaling equation from https://stats.stackexchange.com/a/281164 */
+      double rMin = 1;                // minimum of input scale
+      double rMax = 150;              // maximum of input scale
+      double tMin = 1;                // minimum of target scale
+      double tMax = 35;               // maximum of target scale (max time for animation delay.. works fine for 150 leds but may have to be reduced if pixel count increases or if MQTT disconnects occur)
+      double value = transitionTime;  // input to be scaled
+      double scaledTime = ((value - rMin)/(rMax - rMin))*(tMax - tMin)+tMin;
+
+      // convert to integer for use by rainbowCycle()
+      int inverseTime = (int)scaledTime;
+
+      // invert number scale
+      int correctedTime = tMax - inverseTime + tMin;
+      
+//      Serial.println(correctedTime);  // debug
+      rainbowCycle(correctedTime);      
+    }
+/* End From Tweaking4All */
+
+
+/* Begin From The Hookup */
+    /* LED Locator */
+    /* From https://github.com/thehookup/Holiday_LEDS/blob/master/LightsMCU_CONFIGURE.ino */
+    if(effectString == "LED Locator"){
+      if(newLocator < NUM_PIXELS && newLocator != oldLocator){
+        oldLocator = newLocator;
+        setColor(0, 0, 0);          // from this sketch
+        delay(10);  
+        leds[newLocator]=CRGB(red, green, blue);
+        FastLED.show();
+      }
+    }
+/* End From The Hookup (modified) */
+
+    
   EVERY_N_MILLISECONDS(10) {
 
     nblendPaletteTowardPalette(currentPalette, targetPalette, maxChanges);  // FOR NOISE ANIMATIon
@@ -1000,7 +1259,7 @@ void loop() {
     }
 
     //EFFECT NOISE
-    if (effectString == "noise") {
+    if (effectString == "Noise") {
       for (int i = 0; i < NUM_PIXELS; i++) {                                     // Just onE loop to fill up the LED array as all of the pixels change.
         uint8_t index = inoise8(i * scale, dist + i * scale) % 255;            // Get a value from the noise function. I'm using both x and y axis.
         leds[i] = ColorFromPalette(currentPalette, index, 255, LINEARBLEND);   // With that value, look up the 8 bit colour palette value and assign it to the current LED.
@@ -1014,7 +1273,7 @@ void loop() {
     }
 
     //EFFECT RIPPLE
-    if (effectString == "ripple") {
+    if (effectString == "Ripple") {
       for (int i = 0; i < NUM_PIXELS; i++) leds[i] = CHSV(bgcol++, 255, 15);  // Rotate background colour.
       switch (step) {
         case -1:                                                          // Initialize ripple variables.
@@ -1080,7 +1339,7 @@ void loop() {
     }
   }
 
-  if (startFade && effectString == "solid") {
+  if (startFade && effectString == "Solid") {
     // If we don't want to fade, skip it.
     if (transitionTime == 0) {
       setColor(realRed, realGreen, realBlue);
@@ -1112,7 +1371,7 @@ void loop() {
         grnVal = calculateVal(stepG, grnVal, loopCount);
         bluVal = calculateVal(stepB, bluVal, loopCount);
 
-        if (effectString == "solid") {
+        if (effectString == "Solid") {
           setColor(redVal, grnVal, bluVal); // Write current values to LED pins
         }
         loopCount++;
@@ -1184,7 +1443,85 @@ int calculateVal(int step, int val, int i) {
   return val;
 }
 
+/* Begin From Dr. Zzs */
+////////////////////////place setup__Palette and __Palettestriped custom functions here - for Candy Cane effects ///////////////// 
+///////You can use up to 4 colors and change the pattern of A's AB's B's and BA's as you like//////////////
+void setupHalloweenPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+  HalloweenPalettestriped = CRGBPalette16(
+    A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
+  );
+}
 
+void setupThxPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+  ThxPalettestriped = CRGBPalette16(
+    A, A, A, A, A, A, A, AB, AB, AB, B, B, B, B, B, B
+  );
+}
+
+ 
+
+void setupHJPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+  HJPalettestriped = CRGBPalette16(
+    A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
+  );
+}
+/* End From Dr. Zzs */
+
+
+/* Begin From Halloween Eyes */
+/* Originally from https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectBlinkingHalloweenEyes
+ * Parameter  Purpose                Examples
+ * red      Red Color              0xFF
+ * green    Green Color                0x00
+ * blue       Blue Color               0x00
+ * EyeWidth   How many LEDs per eye        1
+ * EyeSpace   Number of LEDs between the eyes    2
+ * Fade     Fade out or not            true, false
+ * Steps    Number of steps on fade out      10
+ * FadeDelay  Delay between each fade out level  100
+ * EndPause   Delay after everything is completed  1000
+ */
+void SpookyEyes(byte red, byte green, byte blue, 
+                   int EyeWidth, int EyeSpace, 
+                   boolean Fade, int Steps, int FadeDelay,
+                   int EndPause){
+  //randomSeed(analogRead(0));  //esp8266 ***ESP8266 > ESP32 Conversion
+  randomSeed(esp_random());     //esp32
+  
+  int i;
+  int StartPoint  = random( 0, NUM_PIXELS - (2*EyeWidth) - EyeSpace );
+  int Start2ndEye = StartPoint + EyeWidth + EyeSpace;
+  
+  for(i = 0; i < EyeWidth; i++) {
+    setPixel(StartPoint + i, red, green, blue);
+    setPixel(Start2ndEye + i, red, green, blue);
+  }
+  
+  FastLED.show();
+  
+  if(Fade==true) {
+    float r, g, b;
+  
+    for(int j = Steps; j >= 0; j--) {
+      r = j*(red/Steps);
+      g = j*(green/Steps);
+      b = j*(blue/Steps);
+      
+      for(i = 0; i < EyeWidth; i++) {
+        setPixel(StartPoint + i, r, g, b);
+        setPixel(Start2ndEye + i, r, g, b);
+      }
+      
+      FastLED.show();
+      delay(FadeDelay);
+    }
+  }
+  
+  setColor(0, 0, 0); // Set all black
+  
+  delay(EndPause);
+}
+/* End From Halloween Eyes */
 
 /**************************** START STRIPLED PALETTE *****************************************/
 void setupStripedPalette( CRGB A, CRGB AB, CRGB B, CRGB BA) {
@@ -1199,7 +1536,7 @@ void setupStripedPalette( CRGB A, CRGB AB, CRGB B, CRGB BA) {
 /********************************** START FADE************************************************/
 void fadeall() {
   for (int i = 0; i < NUM_PIXELS; i++) {
-    leds[i].nscale8(250);  //for CYCLon
+    leds[i].nscale8(250);  //for Cylon
   }
 }
 
@@ -1337,3 +1674,52 @@ void temp2rgb(unsigned int kelvin) {
         }
     }
 }
+
+/* Begin From Tweaking4All */
+/* Halloween Eyes */
+void setPixel(int Pixel, byte red, byte green, byte blue){
+  leds[Pixel].r = red;
+  leds[Pixel].g = green;
+  leds[Pixel].b = blue;
+}
+/* End Halloween Eyes */
+
+/* Rainbow Cycle */
+void rainbowCycle(int SpeedDelay) {
+  byte *c;
+  uint16_t i, j;
+
+  for(j=0; j<256*1; j++) { // 1 cycle of all colors on wheel
+    for(i=0; i< NUM_PIXELS; i++) {
+      c=Wheel(((i * 256 / NUM_PIXELS) + j) & 255);
+      setPixel(i, *c, *(c+1), *(c+2));
+    }
+    FastLED.setBrightness(brightness);
+    FastLED.show();
+    delay(SpeedDelay);
+  }
+}
+
+byte * Wheel(byte WheelPos) {
+  static byte c[3];
+  
+  if(WheelPos < 85) {
+   c[0]=WheelPos * 3;
+   c[1]=255 - WheelPos * 3;
+   c[2]=0;
+  } else if(WheelPos < 170) {
+   WheelPos -= 85;
+   c[0]=255 - WheelPos * 3;
+   c[1]=0;
+   c[2]=WheelPos * 3;
+  } else {
+   WheelPos -= 170;
+   c[0]=0;
+   c[1]=WheelPos * 3;
+   c[2]=255 - WheelPos * 3;
+  }
+
+  return c;
+}
+/* End Rainbow Cycle */
+/* End From Tweaking4All */
