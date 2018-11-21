@@ -1203,7 +1203,7 @@ void loop() {
       // Fixed:
       // HalloweenEyes(0xff, 0x00, 0x00, 1,4, true, 10, 80, 3000);
       // or Random:
-      SpookyEyes(0xff, 0x00, 0x00, 
+      HalloweenEyes(0xff, 0x00, 0x00, 
                  1, 4, 
                  true, random(5,50), random(50,150), 
                  random(1000, 10000));
@@ -1481,7 +1481,7 @@ void setupHJPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
  * FadeDelay  Delay between each fade out level  100
  * EndPause   Delay after everything is completed  1000
  */
-void SpookyEyes(byte red, byte green, byte blue, 
+void HalloweenEyes(byte red, byte green, byte blue, 
                    int EyeWidth, int EyeSpace, 
                    boolean Fade, int Steps, int FadeDelay,
                    int EndPause){
