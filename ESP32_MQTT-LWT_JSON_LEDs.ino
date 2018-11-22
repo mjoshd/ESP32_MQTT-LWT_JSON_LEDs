@@ -1201,37 +1201,24 @@ void loop() {
      */    
     if(effectString == "Halloween Eyes"){
       if(!stateOn){
-        // do nothing (this is only needed for these animations from Tweaking4All)
+        // do nothing (this is only needed for the animations from Tweaking4All)
       }else{
-
         // scale transitionTime to a number usable by this effect
-        /* Scaling equation from https://stats.stackexchange.com/a/281164 */    
         double value = transitionTime;  // input to be scaled
         double rMin = 1;                // minimum of input scale
         double rMax = 150;              // maximum of input scale
+        
         double sMin = 5;                // minimum of target scale
         double sMax = 50;               // maximum of target scale
-        double scaledSteps = ((value - rMin) / (rMax - rMin)) * (sMax - sMin) + sMin;
-        // convert to integer
-        int intSteps = (int)scaledSteps;
-        // invert number scale
-        int correctedSteps = sMax - intSteps + sMin;
+        int correctedSteps = ScaleTime(transitionTime, rMin, rMax, sMin, sMax);
+  
+        double dMin = 50;               // minimum of target scale
+        double dMax = 150;              // maximum of target scale
+        int correctedDelay = ScaleTime(transitionTime, rMin, rMax, dMin, dMax);
         
-        double dMin = 50;                // minimum of target scale
-        double dMax = 150;               // maximum of target scale
-        double scaledDelay = ((value - rMin) / (rMax - rMin)) * (dMax - dMin) + dMin;
-        // convert to integer
-        int intDelay = (int)scaledDelay;
-        // invert number scale
-        int correctedDelay = dMax - intDelay + dMin;
-        
-        double pMin = 1000;                // minimum of target scale
-        double pMax = 10000;               // maximum of target scale
-        double scaledPause = ((value - rMin) / (rMax - rMin)) * (pMax - pMin) + pMin;
-        // convert to integer
-        int intPause = (int)scaledPause;
-        // invert number scale
-        int correctedPause = pMax - intPause + pMin;
+        double pMin = 1000;             // minimum of target scale
+        double pMax = 10000;            // maximum of target scale
+        int correctedPause = ScaleTime(transitionTime, rMin, rMax, pMin, pMax);
       
       // Fixed:
       //    HalloweenEyes(0xff, 0x00, 0x00, 1,4, true, 10, 80, 3000);
@@ -1248,26 +1235,19 @@ void loop() {
     /* From https://www.tweaking4all.com/hardware/arduino/adruino-led-strip-effects/#LEDStripEffectRainbowCycle */
     if(effectString == "Rainbow Cycle"){
       if(!stateOn){
-        // do nothing (this is only needed for these animations from Tweaking4All)
+        // do nothing (this is only needed for the animations from Tweaking4All)
       }else{
         /* rainbowCycle(20); */             // higher number = slower effect
         
         // scale transitionTime to a number usable by this effect
-        /* Scaling equation from https://stats.stackexchange.com/a/281164 */
+        double value = transitionTime;  // input to be scaled
         double rMin = 1;                // minimum of input scale
         double rMax = 150;              // maximum of input scale
         double tMin = 1;                // minimum of target scale
         double tMax = 35;               // maximum of target scale (max time for animation delay.. works fine for 150 leds but may have to be reduced if pixel count increases or if MQTT disconnects occur)
-        double value = transitionTime;  // input to be scaled
-        double scaledTime = ((value - rMin)/(rMax - rMin))*(tMax - tMin)+tMin;
-  
-        // convert to integer for use by rainbowCycle()
-        int inverseTime = (int)scaledTime;
-  
-        // invert number scale
-        int correctedTime = tMax - inverseTime + tMin;
         
-//        Serial.println(correctedTime);  // debug
+        int correctedTime = ScaleTime(transitionTime, rMin, rMax, tMin, tMax);
+        
         rainbowCycle(correctedTime);      
       }
     }
@@ -1748,3 +1728,23 @@ byte * Wheel(byte WheelPos) {
 }
 /* End Rainbow Cycle */
 /* End From Tweaking4All */
+
+int ScaleTime(double value, double rMin, double rMax, double tMin, double tMax){
+  /* Usage:
+   * ScaleTime(a, b, c, d, e);  
+   * where
+   *      a = input to be scaled
+   *      b = minimum of input scale
+   *      c = maximum of input scale
+   *      d = minimum of target scale
+   *      e = maximum of target scale
+   */
+  
+  /* Scaling equation from https://stats.stackexchange.com/a/281164 */    
+  double scaledTime = ((value - rMin) / (rMax - rMin)) * (tMax - tMin) + tMin;
+  
+  /* invert number scale */
+  int correctedTime = (int)tMax - (int)scaledTime + (int)tMin;
+  
+  return correctedTime;
+}
