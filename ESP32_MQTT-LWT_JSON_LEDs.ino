@@ -159,6 +159,7 @@ led_effect:
     - "Dots" 
     - "Fire"
     - "Glitter"
+    - "Glitter (random)"
     - "Juggle"
     - "Lightning"
     - "Noise"
@@ -170,7 +171,10 @@ led_effect:
     - "Sinelon"
     - "Solid"
     - "Twinkle"
+    - "Xmas"
+    - "Xmas Glitter"
     - "Christmas"
+    - "Holly Jolly"
     - "Thanksgiving"
     - "Turkey Day"
     - "Halloween"
@@ -206,6 +210,7 @@ led_effect:
     - "Dots" 
     - "Fire"
     - "Glitter"
+    - "Glitter (random)"
     - "Juggle"
     - "Lightning"
     - "Noise"
@@ -217,7 +222,10 @@ led_effect:
     - "Sinelon"
     - "Solid"
     - "Twinkle"
+    - "Xmas"
+    - "Xmas Glitter"
     - "Christmas"
+    - "Holly Jolly"
     - "Thanksgiving"
     - "Turkey Day"
     - "Halloween"
@@ -322,7 +330,7 @@ int stepR, stepG, stepB;
 int redVal, grnVal, bluVal;
 int color_temp;
 
-int newLocator, oldLocator;     /* From The Hookup */
+int newLocator, oldLocator;     /* To support code from The Hook Up */
 
 bool flash = false;
 bool startFlash = false;
@@ -454,6 +462,12 @@ CRGBPalette16 HalloweenPalettestriped;  //for Halloween
 CRGBPalette16 HJPalettestriped;         //for Holly Jolly
 /* End From Dr. Zzs */
 
+
+/* Begin from mjoshd */
+CRGBPalette16 XmasPalettestriped;        //for Xmas
+/* End from mjoshd */
+
+
 String sTopic, sMessage;
 WiFiClient espClient;
 PubSubClient client(espClient);
@@ -479,6 +493,10 @@ void setup() {
   setupHalloweenPalette( CRGB::DarkOrange, CRGB::DarkOrange, CRGB::Indigo, CRGB::Indigo); //for Halloween
   setupHJPalette( CRGB::Red, CRGB::Red, CRGB::Green, CRGB::Green); //for Holly Jolly
 /* End From Dr. Zzs */
+
+/* Begin From mjoshd */
+  setupXmasPalette( CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Gold); //Yellow); //for Xmas
+ /* End From mjoshd */
 
 /*- continue standard setup -*/
   ArduinoOTA.setPort(OTA_PORT);
@@ -940,14 +958,25 @@ void loop() {
   //EFFECT Glitter
   if (effectString == "Glitter") {
     fadeToBlackBy( leds, NUM_PIXELS, 20);
-//    addGlitterColor(80, random(0, 255), random(0, 255), random(0, 255));   // random color glitter
-    addGlitterColor(80, realRed, realGreen, realBlue);                   // selectable color glitter
+//    addGlitterColor(80, random(0, 255), random(0, 255), random(0, 255));   // random color
+    addGlitterColor(80, realRed, realGreen, realBlue);                   // selectable single color
     if (transitionTime == 0 or transitionTime == NULL) {
       transitionTime = 30;
     }
     showleds();
   }
 
+
+  //EFFECT Glitter (random)
+  if (effectString == "Glitter (random)") {
+    fadeToBlackBy( leds, NUM_PIXELS, 20);
+    addGlitterColor(80, random(0, 255), random(0, 255), random(0, 255));   // random color
+//    addGlitterColor(80, realRed, realGreen, realBlue);                   // selectable single color
+    if (transitionTime == 0 or transitionTime == NULL) {
+      transitionTime = 30;
+    }
+    showleds();
+  }
 
   //EFFECT JUGGLE
   if (effectString == "Juggle" ) {                           // eight colored dots, weaving in and out of sync with each other
@@ -1183,6 +1212,56 @@ void loop() {
     }
 /* End From Dr. Zzs */
 
+
+/* Begin from mjoshd */
+if(effectString == "Xmas"){     
+      static uint8_t startIndex = 0;
+      startIndex = startIndex + 1;                        /* higher = faster motion */
+      fill_palette(leds, NUM_PIXELS,
+        startIndex, 16,                                   /* higher = narrower stripes */
+        XmasPalettestriped, 255, LINEARBLEND);
+      if(transitionTime == 0 or transitionTime == NULL){
+        transitionTime = 0;
+      }                 
+      showleds();
+    }
+
+//EFFECT Xmas Glitter
+  if (effectString == "Xmas Glitter") {
+    fadeToBlackBy( leds, NUM_PIXELS, 30);
+//    addGlitterColor(80, realRed, realGreen, realBlue);
+    addGlitterColor(95, 255, 0, 0);   //red
+    addGlitterColor(90, 255, 0, 0);
+    addGlitterColor(85, 255, 0, 0);
+    addGlitterColor(80, 255, 0, 0);
+    addGlitterColor(94, 0, 255, 0);   //green
+    addGlitterColor(89, 0, 255, 0);
+    addGlitterColor(84, 0, 255, 0);
+    addGlitterColor(79, 0, 255, 0);
+//    addGlitterColor(95, 255, 0, 0);   //add more red
+//    addGlitterColor(95, 255, 0, 0);
+//    addGlitterColor(90, 255, 0, 0);
+//    addGlitterColor(90, 255, 0, 0);
+//    addGlitterColor(85, 255, 0, 0);
+//    addGlitterColor(85, 255, 0, 0);
+//    addGlitterColor(80, 255, 0, 0);
+//    addGlitterColor(80, 255, 0, 0);
+//    addGlitterColor(94, 0, 255, 0);   //add more green
+//    addGlitterColor(94, 0, 255, 0);
+//    addGlitterColor(89, 0, 255, 0);
+//    addGlitterColor(89, 0, 255, 0);
+//    addGlitterColor(84, 0, 255, 0);
+//    addGlitterColor(84, 0, 255, 0);
+//    addGlitterColor(79, 0, 255, 0);
+//    addGlitterColor(79, 0, 255, 0);
+    addGlitterColor(39, 0, 0, 255);   //blue (comment out if you hate purple)
+//    addGlitterColor(38, 255, 210, 0); //gold (already created when red & green mix)
+    if (transitionTime == 0 or transitionTime == NULL) {
+      transitionTime = 20;
+    }
+    showleds();
+  }
+/* End from mjoshd */
 
 
 /* Begin From Tweaking4All */
@@ -1464,26 +1543,40 @@ int calculateVal(int step, int val, int i) {
 /* Begin From Dr. Zzs */
 ////////////////////////place setup__Palette and __Palettestriped custom functions here - for Candy Cane effects ///////////////// 
 ///////You can use up to 4 colors and change the pattern of A's AB's B's and BA's as you like//////////////
-void setupHalloweenPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+void setupHalloweenPalette(CRGB A, CRGB AB, CRGB B, CRGB BA){
   HalloweenPalettestriped = CRGBPalette16(
-    A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
-  );
+                                          A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
+                            );
 }
 
-void setupThxPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+void setupThxPalette(CRGB A, CRGB AB, CRGB B, CRGB BA){
   ThxPalettestriped = CRGBPalette16(
-    A, A, A, A, A, A, A, AB, AB, AB, B, B, B, B, B, B
-  );
+                                    A, A, A, A, A, A, A, AB, AB, AB, B, B, B, B, B, B
+                      );
 }
 
- 
-
-void setupHJPalette( CRGB A, CRGB AB, CRGB B, CRGB BA){
+void setupHJPalette(CRGB A, CRGB AB, CRGB B, CRGB BA){
   HJPalettestriped = CRGBPalette16(
-    A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
-  );
+                                    A, A, A, A, A, A, A, A, B, B, B, B, B, B, B, B
+                     );
 }
 /* End From Dr. Zzs */
+
+
+
+/* Begin From mjoshd */
+
+void setupXmasPalette(CRGB A, CRGB B, CRGB C, CRGB D){
+  XmasPalettestriped = CRGBPalette16(
+//                                      A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D // 1 pixel
+//                                      A, A, B, B, C, C, D, D, A, A, B, B, C, C, D, D // 2 pixels
+//                                      A, A, A, A, B, B, B, B, C, C, C, C, D, D, D, D // 4 pixels
+//                                      A, A, A, A, A, B, B, B, B, B, C, C, C, D, D, D // mixed 3 cd
+                                      A, A, A, A, A, A, B, B, B, B, B, B, C, C, D, D // mixed 2 cd
+                       );
+}
+/* End From mjoshd */
+
 
 
 /* Begin From Halloween Eyes */
