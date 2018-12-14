@@ -188,7 +188,8 @@ led_effect:
 ####################
 # lights.yaml:
 ####################
-- platform: mqtt_json
+- platform: mqtt
+  schema: json
   name: "Back Porch LEDs"
   state_topic: "led/2811/back_porch"
   command_topic: "led/2811/back_porch/cmnd"
