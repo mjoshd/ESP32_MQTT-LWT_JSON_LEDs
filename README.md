@@ -21,7 +21,8 @@
 * Re-factored some code to increase readability and ease of adoption
 
 ```text
-Many thanks go out to Ben (BRUH Automation), Justin (Dr. Zzs), Rob (The Hook Up), Hans (Tweaking4All), and Rui (Random Nerd Tutorials).
+Many thanks go out to Ben (BRUH Automation), Justin (Dr. Zzs), Rob (The Hook Up),
+Hans (Tweaking4All), and Rui (Random Nerd Tutorials).
 
 You all provided the source code and, more importantly, the inspiration which made this possible!
 
