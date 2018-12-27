@@ -538,7 +538,10 @@ String loginIndex =
 const char* serverIndex = 
 "<script src='https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>"
 "<form method='POST' action='#' enctype='multipart/form-data' id='upload_form'>"
+  "<br>"
   "<input type='file' name='update'>"
+  "<br>"
+  "<br>"
   "<input type='submit' value='Update'>"
 "</form>"
 "<div id='prg'>Progress: 0%</div>"
@@ -547,7 +550,7 @@ const char* serverIndex =
     "e.preventDefault();"
     "var form = $('#upload_form')[0];"
     "var data = new FormData(form);"
-    " $.ajax({"
+    "$.ajax({"
       "url: '/update',"
       "type: 'POST',"
       "data: data,"
@@ -558,7 +561,7 @@ const char* serverIndex =
         "xhr.upload.addEventListener('progress', function(evt) {"
           "if (evt.lengthComputable) {"
             "var per = evt.loaded / evt.total;"
-            "$('#prg').html('progress: ' + Math.round(per*100) + '%');"
+            "$('#prg').html('Progress: ' + Math.round(per*100) + '%');"
           "}"
         "}, false);"
         "return xhr;"
@@ -595,7 +598,7 @@ void setup() {
 /* End From Dr. Zzs */
 
 /* Begin From mjoshd */
-  setupXmasPalette( CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::Gold); //Yellow); //for Xmas
+  setupXmasPalette( CRGB::Red, CRGB::Green, CRGB::Blue, CRGB::DarkOrange); //DarkGoldenrod //OrangeRed //for Xmas
  /* End From mjoshd */
 
 /*- continue standard setup -*/
@@ -1408,8 +1411,10 @@ if(effectString == "Xmas"){
     addGlitterColor(80, 0, 255, 0);
     addGlitterColor(80, 0, 255, 0);
 
-    addGlitterColor(60, 0, 0, 255);   //blue (comment out if you hate purple)
-    addGlitterColor(30, 255, 210, 0); //gold (already created when red & green mix)
+    addGlitterColor(80, 0, 0, 255);     // Blue (comment out if you hate purple)
+//    addGlitterColor(30, 255, 210, 0);   // Gold (already created when red & green mix)
+//    addGlitterColor(30, 255,  67, 0);   // OrangeRed (looks dark-orange should)
+    addGlitterColor(80, 255, 139, 0);   // DarkOrange (looks gold) 
     if (transitionTime == 0 or transitionTime == NULL) {
       transitionTime = 20;
     }
@@ -1722,11 +1727,12 @@ void setupHJPalette(CRGB A, CRGB AB, CRGB B, CRGB BA){
 
 void setupXmasPalette(CRGB A, CRGB B, CRGB C, CRGB D){
   XmasPalettestriped = CRGBPalette16(
-//                                      A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D // 1 pixel
-//                                      A, A, B, B, C, C, D, D, A, A, B, B, C, C, D, D // 2 pixels
-//                                      A, A, A, A, B, B, B, B, C, C, C, C, D, D, D, D // 4 pixels
-//                                      A, A, A, A, A, B, B, B, B, B, C, C, C, D, D, D // mixed 3 cd
-                                      A, A, A, A, A, A, B, B, B, B, B, B, C, C, D, D // mixed 2 cd
+//                                      A, B, C, D, A, B, C, D, A, B, C, D, A, B, C, D      // Single pixel (lots of color blending)
+//                                      A, A, B, B, C, C, D, D, A, A, B, B, C, C, D, D      // Groups of 2
+                                      A, A, A, A, B, B, B, B, C, C, C, C, D, D, D, D      // Groups of 4
+//                                      A, A, A, A, A, B, B, B, B, B, C, C, C, D, D, D      // 5AB, 3CD
+//                                      A, A, A, A, A, A, B, B, B, B, B, B, C, C, D, D      // 6AB, 2CD
+                                      
                        );
 }
 /* End From mjoshd */
