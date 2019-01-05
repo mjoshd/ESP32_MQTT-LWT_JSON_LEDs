@@ -66,7 +66,7 @@ mqtt:
 ####################
 - action:
   - data_template:
-      topic: led/2811/back_porch/cmnd
+      topic: "led/2811/back_porch/cmnd"
       payload: '{"transition":{{ trigger.to_state.state | int }}}'
     service: mqtt.publish
   alias: LED Animation Speed
@@ -79,7 +79,7 @@ mqtt:
     platform: state
 - action:
   - data_template:
-      topic: led/2811/back_porch/cmnd
+      topic: "led/2811/back_porch/cmnd"
       payload: '{"state": "ON", "effect":"{{ trigger.to_state.state | string }}"}'
     service: mqtt.publish
   alias: LED Effect
@@ -109,7 +109,7 @@ mqtt:
   condition: []
   action:
   - data_template:
-      topic: led/2811/back_porch/cmnd
+      topic: "led/2811/back_porch/cmnd"
       payload: '{"location":{{ trigger.to_state.state | int }}}'
     service: mqtt.publish
 
